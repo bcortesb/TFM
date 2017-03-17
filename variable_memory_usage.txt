@@ -1,4 +1,4 @@
-119
+274
 0:0	ENDPOINT_FLAG_ACTIVE
 0:0	ENDPOINT_FLAG_BGAPI
 0:0	ENDPOINT_FLAG_CLOSING
@@ -172,20 +172,18 @@
 4:4	input
 8:4	adcvalue
 12:4	hrvalue
-16:5	tmp
-21:4	len
-25:4	connected
-29:4	ticker
-33:4	toggle
-37:2	hr_data
-39:80	lcd_buffer
-119:0	lcd_cs_port
-119:0	lcd_cs_mask
-119:0	lcd_cs_pin_nbr
-119:0	lcd_rs_port
-119:0	lcd_rs_mask
-119:0	lcd_rs_pin_nbr
-119:0	lcd_spi_endpoint
-119:0	led_port
-119:0	led_mask
-119:0	led_pin_nbr
+16:4	count
+20:4	connected
+24:250	hr_data
+274:0	led_port_Bluetooth
+274:0	led_mask_Bluetooth
+274:0	led_pin_nbr_Bluetooth
+274:0	led_port_TX
+274:0	led_mask_TX
+274:0	led_pin_nbr_TX
+274:0	led_port_Disc
+274:0	led_mask_Disc
+274:0	led_pin_nbr_Disc
+274:0	reset_button_port
+274:0	reset_button_mask
+274:0	reset_button_pin_nbr
