@@ -45,7 +45,7 @@ event system_boot(major, minor, patch, build, bootloader, hw)
 	call hardware_configure_gpio(led_port_Disc, led_pin_nbr_Disc, hardware_gpio_output,hardware_gpio_float)
 	
 	# Configure reset input
-	call hardware_configure_gpio(reset_port, reset_pin_nbr, hardware_gpio_input,hardware_gpio_float)
+	call hardware_configure_gpio(reset_button_port, reset_button_pin_nbr, hardware_gpio_input,hardware_gpio_float)
 
 
     # By default stream data to DROP endpoint meaning the data will be ignored
@@ -130,7 +130,7 @@ event le_connection_closed(reason,connection)
 	
 	if connected = 0 then
 		#Bluetooth led off when connection is off
-		call hardware write_gpio(led_port_Bluetooth,led_mask_Bluetooth,$0000)
+		call hardware_write_gpio(led_port_Bluetooth,led_mask_Bluetooth,$0000)
 	end if
 	
 end
