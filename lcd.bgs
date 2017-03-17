@@ -1,0 +1,57 @@
+
+
+export dim lcd_buffer(80) # buffer to store data to display
+
+# display CS on development board: Pin P0.14
+const lcd_cs_port    = 0
+const lcd_cs_mask    = $4000
+const lcd_cs_pin_nbr = 14
+
+# display RS on development board: Pin P1.14
+const lcd_rs_port    = 1
+const lcd_rs_mask    = $4000
+const lcd_rs_pin_nbr = 14
+
+# LCD is controlled via SPI1 -> endpoint id 3
+const lcd_spi_endpoint = 3
+
+# LCD initialization routine
+export procedure lcd_init()
+
+    # Configure display CS as GPIO output
+    call hardware_configure_gpio(lcd_cs_port, lcd_cs_pin_nbr, hardware_gpio_output, hardware_gpio_float)
+
+    # Configure display RS as GPIO output
+    call hardware_configure_gpio(lcd_rs_port, lcd_rs_pin_nbr, hardware_gpio_output, hardware_gpio_float)
+
+
+    call hardware_write_gpio(lcd_cs_port, lcd_cs_mask, lcd_cs_mask)  # display CS = '1'
+    call hardware_write_gpio(lcd_cs_port, lcd_cs_mask, $0)   # display CS = '0'
+
+    call hardware_write_gpio(lcd_rs_port, lcd_rs_mask, $0)   # display RS = '0' -> command mode
+
+    # initialize the display
+    call endpoint_send(lcd_spi_endpoint, 11, "\x30\x30\x30\x39\x14\x56\x6d\x70\x0c\x06\x01")
+
+    # note: display chip select needs to be left active (low), because endpoint_send() called
+    # above is non-blocking. Otherwise CS will be de-asserted before all initialization bytes
+    # have been written to LCD module.
+
+end
+
+# This function updates LCD content by writing the whole 80-byte array over SPI
+export procedure lcd_write()
+
+    # drive display chip select high and then back low again:
+    call hardware_write_gpio(lcd_cs_port, lcd_cs_mask, lcd_cs_mask)
+    call hardware_write_gpio(lcd_cs_port, lcd_cs_mask, $0)
+
+    # enable data mode by setting display RS pin high
+    call hardware_write_gpio(lcd_rs_port, lcd_rs_mask, lcd_rs_mask)
+
+    # send display content
+    call endpoint_send(lcd_spi_endpoint, 80, lcd_buffer(0:80))
+
+    # note that display CS is left active and it is de-asserted next time this function is called.
+
+end

@@ -1,0 +1,157 @@
+# ================================================================
+# BGScript demo: Heartrate Demo script
+# ----------------------------------------------------------------
+# CHANGELOG:
+#   
+# ================================================================
+dim result
+dim input
+dim adcvalue
+dim hrvalue
+
+dim tmp(5)
+dim len
+dim connected
+
+dim ticker
+dim toggle
+
+dim hr_data(2)
+
+# generic routines to intialize and update devkit LCD are separated into own file
+import "lcd.bgs"
+
+# LED pin: use PB8 (The LED next to BTN1 on development board)
+const led_port    = 1
+const led_mask    = $0100
+const led_pin_nbr = 8
+
+procedure lcd_update()
+
+    # update display buffer (declared in "lcd.bgs")
+
+    # show connection status at the end second row (LCD 2nd row starts at offset 40)
+    if connected > 0 then
+        lcd_buffer(40+13:3) = "Con" # Connected
+    else
+        lcd_buffer(40+13:3) = "Adv" # Advertising, not connected
+    end if
+
+    # print current adcvalue (raw ADC reading) on the 2nd row:
+    lcd_buffer(40:4) = "    "
+    call util_itoa(adcvalue)(len,tmp(0:len))
+    lcd_buffer(40+4-len:len)=tmp(0:len)
+    lcd_buffer(44:1) = $7e # '->' character in the LCD font table
+
+    # print the simulated heart rate:
+    lcd_buffer(45:3) = "   "
+    call util_itoa(hrvalue)(len,tmp(0:len))
+    lcd_buffer(45+3-len:len)=tmp(0:len)
+
+    # Finally, call lcd_write() to write the modified display buffer content to the LCD module
+    call lcd_write()
+
+end
+
+# Boot event listener - Generated when the module is started
+event system_boot(major, minor, patch, build, bootloader, hw)
+
+    call lcd_init()
+
+    # Configure LED pin as GPIO output
+    call hardware_configure_gpio(led_port, led_pin_nbr, hardware_gpio_output,hardware_gpio_float)
+
+    # By default stream data to DROP endpoint meaning the data will be ignored
+    call endpoint_set_streaming_destination(3,31)
+    call endpoint_set_streaming_destination(0,31)
+
+    # Initialize display data
+    lcd_buffer(0:13) = "BT121 HR demo"
+
+    call endpoint_send(0, 15, "BT121 HR demo\r\n")
+end
+
+#generated when bluetooth radio is ready to use
+event system_initialized(addr)
+    # set timer, time interval between events is 1 second
+    call hardware_set_soft_timer(1000,0,0)
+
+    # start another timer, this fast timer is used to drive LED.
+    call hardware_set_soft_timer(10,1,0)    # interval = 10 ms, handle = 1, timer is repeating
+
+    # set connectable and discoverable mode
+    call le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable)
+end
+
+
+#generated when timer has lapsed
+event hardware_soft_timer(handle)
+
+    if handle = 0 then
+        # the slow timer at 1Hz has lapsed
+
+        # measure pontiometer, remeber that the switch on devkit must be turn to POTENTIOMETER
+        call hardware_read_adc(4)(result, input, adcvalue)
+
+        if result = 0 then
+            # convert raw ADC reading to heart rate value (adc value range is 0..4095 -> hrvalue range is 20..183)
+            hrvalue = adcvalue/25 + 20
+        else
+            # if ADC read is unsuccessful, response value is 0
+            hrvalue = 0
+        end if
+
+        hr_data(0:1) = 0  # flags. zero means heart rate is sent as 8-bit value and no extra info is sent
+        hr_data(1:1) = hrvalue
+
+        call gatt_server_send_characteristic_notification($ff, xgatt_hr, 2, hr_data(0:2))
+
+        call lcd_update()
+
+    end if
+
+    if handle = 1 then
+        # the fast 10ms timer that is used to drive the devkit LED has lapsed.
+
+        # ticker increment is within range 20..183, depending on potentiometer setting
+        ticker = ticker + hrvalue
+
+        # fastest rate: 183 units per 10 ms -> 18300 units per second
+        # slowest rate: 20 units per 10 ms -> 2000 units per second
+
+        if ticker > 2000 then
+            ticker = 0
+
+            # toggle LED each time ticker reaches limit
+            if toggle = 0 then
+                call hardware_write_gpio(led_port, led_mask, $0000)  # turn LED off
+                toggle = 1
+            else
+                call hardware_write_gpio(led_port, led_mask, led_mask)  # turn LED on
+                toggle = 0
+            end if
+
+        end if
+
+
+    end if
+
+end
+
+# generated when new connection is opened
+event le_connection_opened(address,address_type,master,connection,bonding)
+    call endpoint_send(0, 9, "Connect\r\n")
+
+    connected = 1
+end
+
+# generated when the connection is closed
+event le_connection_closed(reason,connection)
+
+    call endpoint_send(0, 12, "Disconnect\r\n")
+
+    # connection closed, restart advertisement
+    call le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable) 
+
+    connected = 0
+end

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- SDP record for Bluetooth BR/EDR SPP profile -->
+<ServiceRecord>
+
+<ServiceClassIDList>
+    <ServiceClass uuid128="1101"/>
+</ServiceClassIDList>
+
+<ProtocolDescriptorList>
+    <Protocol>
+        <UUID16 value="0100"/>
+    </Protocol>
+    <Protocol>
+        <UUID16 value="03"/>
+        <UINT8  value="05"/>
+    </Protocol>
+</ProtocolDescriptorList>
+
+<BrowseGroupList>
+    <UUID16 value="1002"/>
+</BrowseGroupList>
+
+<LanguageBaseAttributeIDList>
+    <UINT16 value="656e"/>
+    <UINT16 value="006a"/>
+    <UINT16 value="0100"/>
+</LanguageBaseAttributeIDList>
+
+<!-- Service name -->
+<ServiceName text="Bluetooth Serial Port" language_id="0100"/>
+
+<BluetoothProfileDescriptorList>
+    <Profile>
+        <UUID16 value="1101"/>
+        <UINT16 value="0100"/>
+    </Profile>
+</BluetoothProfileDescriptorList>
+
+</ServiceRecord>
