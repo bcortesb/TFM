@@ -39,6 +39,9 @@ const reset_button_pin_nbr	= 6
 # Boot event listener - Generated when the module is started
 event system_boot(major, minor, patch, build, bootloader, hw)
 
+	# Write welcome message to UART interface at boot
+    call endpoint_send(0,20,"HEART RATE START\r\n")
+
     # Configure LEDs pins as GPIO output
     call hardware_configure_gpio(led_port_Bluetooth, led_pin_nbr_Bluetooth, hardware_gpio_output,hardware_gpio_float)
 	call hardware_configure_gpio(led_port_TX, led_pin_nbr_TX, hardware_gpio_output,hardware_gpio_float)
@@ -102,6 +105,8 @@ event hardware_soft_timer(handle)
 		#LED TX on
 		call hardware_write_gpio(led_port_TX,led_mask_TX,led_mask_TX)
 		
+		call endpoint_send(0,250,hr_data(0:250))
+		
     end if
 
 end
@@ -110,6 +115,9 @@ end
 event le_connection_opened(address,address_type,master,connection,bonding)
     call endpoint_send(0, 9, "Connect\r\n")
 
+	# Write a message to UART interface to indicate SPP connection
+    call endpoint_send(0,15,"HeartRate CONNECTED\r\n")
+		
     connected = 1
 	if connected = 1 then
 		#Bluetooth led on when connection is on
