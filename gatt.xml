@@ -6,7 +6,7 @@
 
       <characteristic uuid="2a00">
         <properties read="true" const="true" />
-        <value>Heart Rate Demo</value>
+        <value>Heart Rate</value>
       </characteristic>
 
       <characteristic uuid="2a01">
@@ -23,7 +23,7 @@
     </service>
 
     <service uuid="180d" advertise="true">
-       <description>HR demo</description>
+       <description>HR</description>
        <include id="manufacturer" />
       <characteristic uuid="2a37" id="xgatt_hr">
           <properties notify="true" />
