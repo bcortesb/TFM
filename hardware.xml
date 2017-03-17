@@ -11,10 +11,24 @@
     <uart baud="115200" flowcontrol="false" bgapi="false" />
 
     <!-- SPI enabled for dev.kit display -->
-    <spi channel="1" alternate="2" clock_idle_polarity="high" clock_edge="1" endianness="msb" divisor="256" />
-
-    <!-- I/O configuration disabled -->
-    <port index="0"  pulldown="0xFF" />
-    <port index="1"  pulldown="0xFF" />
+    <!--<spi channel="1" alternate="2" clock_idle_polarity="high" clock_edge="1" endianness="msb" divisor="256" />
+-->
+    <!-- I/O configuration -->
+	<!-- Output leds:
+			- PB3: Bluetooth connection (Blue)
+			- PB4: TX (green)
+			- PB5: Disc. (red)
+		 Input:
+			- PB6: Reset
+			-->
+    <!-- Output-->
+	<port index="1"  output="0x38" />
+	<!-- Input-->
+    <port index="1"  input="0x40" />
+	<!-- Disabled ports-->
+	<port index="0" pulldown="0xFF" />
+	<port index="1" pulldown="0x0F" />
+	
+	
 
 </hardware>
