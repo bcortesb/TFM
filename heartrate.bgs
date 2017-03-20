@@ -17,6 +17,7 @@ dim ltx,lrx
 dim f,t
 dim display(80)
 dim tmp(5)
+dim offset
 
 
 dim connected
@@ -68,7 +69,7 @@ end
 #generated when bluetooth radio is ready to use
 event system_initialized(addr)
 
-	count = 0
+	count = 1
 	
 	# Set local Bluetooth friendly name for Bluetooth classic
     call system_set_local_name(18,"BT121 HTM+SPP Demo")
@@ -143,13 +144,22 @@ event hardware_soft_timer(handle)
     
 	if handle = 1 then
         # the fast 2ms timer that is used to drive the devkit LED has lapsed.
+		
+		# System reques ADC read operation
+		#	12 effective bits, range = [-2048, +2047] when right-alligned
+		#	Internal 1.24V reference
 		call hardware_read_adc(4) (result,input, adcvalue)
-		count = count + 1
+		
 		
 		if result = 0 then #Result=0 successful
             # convert raw ADC reading to heart rate value (adc value range is 0..4095 -> hrvalue range is 20..183)
 			# AJUSTAR ESTA ECUACION A LOS VALORES DE VOLTAJE QUE SE RECIBEN
-            hrvalue = adcvalue/25 + 20
+			# ADC value is 12 MSB
+            hrvalue = adcvalue / 16
+			
+			# Calculate heart ECG
+			# ADC*V_ref/ADC_max * V_coeff + offset
+			hrvalue = (10*hrvalue*1240/2047) * 10/45 + offset
         else #error
             # if ADC read is unsuccessful, response value is 0
             hrvalue = 0
@@ -157,19 +167,21 @@ event hardware_soft_timer(handle)
 		
 		hr_data(0:1)=0	# flags. zero means heart rate is sent as 8-bit value and no extra info is sent
 		hr_data(count:4)=float(hrvalue,-1)	#Deformation value storage every 2ms and sended every 500ms to the app
+		count = count + 4
 			
     end if
 	
     if handle = 0 then
         # the slow timer at 126ms has lapsed
-		count = 0
+		count = 1
 
 		#$ff: To all connected devices; xgatt_hr: characteristic handle;
         call gatt_server_send_characteristic_notification($ff, xgatt_hr, 2, hr_data(0:250))
 		#LED TX on
 		call hardware_write_gpio(led_port_TX,led_mask_TX,led_mask_TX)
 		
-		call endpoint_send(0,252,hr_data(0:252))
+		call endpoint_send(rep,252,hr_data(0:252))
+		call endpoint_send(0,20,hr_data(0:251))
 		
     end if
 
