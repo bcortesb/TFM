@@ -25,6 +25,11 @@ dim connected
 #max (for the buffer): 256 bytes. Store every 2ms till 126ms
 dim hr_data(252)
 
+#for testing
+dim test(5)
+dim value
+dim pos
+
 # LED pins:
 # (output)LED Bluetooth:
 const led_port_Bluetooth	= 1
@@ -71,6 +76,10 @@ event system_initialized(addr)
 
 	count = 1
 	
+	#for test
+	value=0
+	pos=0
+	
 	# Set local Bluetooth friendly name for Bluetooth classic
     call system_set_local_name(18,"BT121 HTM+SPP Demo")
 	
@@ -95,6 +104,10 @@ event system_initialized(addr)
     # start another timer, this fast timer is used to drive LED.
     call hardware_set_soft_timer(2,1,0)    # interval = 2 ms, handle = 1, timer is repeating
 	# 2 ms -> 500Hz -> Frequency for ECG read
+	
+	# start another timer: for testing
+    call hardware_set_soft_timer(21,2,0)    # interval = 21 ms, handle = 2, timer is repeating
+	
 
     # set connectable and discoverable mode
     call le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable)
@@ -148,7 +161,7 @@ event hardware_soft_timer(handle)
 		# System reques ADC read operation
 		#	12 effective bits, range = [-2048, +2047] when right-alligned
 		#	Internal 1.24V reference
-		call hardware_read_adc(4) (result,input, adcvalue)
+		call hardware_read_adc(4) (result,input,adcvalue)
 		
 		
 		if result = 0 then #Result=0 successful
@@ -171,17 +184,28 @@ event hardware_soft_timer(handle)
 			
     end if
 	
+
+	if handle = 2 then
+		#for testing
+		value=value+1
+		test(pos:4)=float(value,-1)
+		pos=pos+4		
+		
+	end if
+	
     if handle = 0 then
         # the slow timer at 126ms has lapsed
 		count = 1
+		pos=0
 
 		#$ff: To all connected devices; xgatt_hr: characteristic handle;
-        call gatt_server_send_characteristic_notification($ff, xgatt_hr, 2, hr_data(0:250))
+        call gatt_server_send_characteristic_notification($ff, xgatt_hr, 2, hr_data(0:252))
 		#LED TX on
 		call hardware_write_gpio(led_port_TX,led_mask_TX,led_mask_TX)
 		
 		call endpoint_send(rep,252,hr_data(0:252))
-		call endpoint_send(0,20,hr_data(0:251))
+		call endpoint_send(0,20,"p1\r\n")
+		call endpoint_send(0,20,test(0:5))
 		
     end if
 
