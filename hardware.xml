@@ -10,9 +10,7 @@
     <!-- UART enabled @115200bps -->
     <uart baud="115200" flowcontrol="false" bgapi="false" />
 
-    <!-- SPI enabled for dev.kit display -->
-    <!--<spi channel="1" alternate="2" clock_idle_polarity="high" clock_edge="1" endianness="msb" divisor="256" />
--->
+
     <!-- I/O configuration -->
 	<!-- Output leds:
 			- PB3: Bluetooth connection (Blue)
