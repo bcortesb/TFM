@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <hardware>
-	<!-- adc input: PA7 as AI interface for the StrainGage -->
-    <adc inputs="0x80" />
+	<!-- adc input: PA4 as AI interface for the StrainGage -->
+    <adc inputs="0x10" />
 
     <!-- Sleep modes disabled -->
     <sleep enabled="false"/>

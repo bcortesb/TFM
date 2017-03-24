@@ -8,11 +8,11 @@
         <properties read="true" const="true" />
         <value>Heart Rate</value>
       </characteristic>
-
-      <characteristic uuid="2a01">
+	  
+	  <characteristic uuid="2a01">
         <properties read="true" const="true" />
         <value type="hex">4003</value>
-      </characteristic>
+      </characteristic>     
     </service>
 
     <service uuid="180A" id="manufacturer">

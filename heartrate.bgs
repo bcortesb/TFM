@@ -9,7 +9,7 @@ dim input
 dim adcvalue
 dim hrvalue
 dim sent
-dim def_n
+dim defo
 dim def_previous
 dim hr_counter
 dim connected
@@ -19,8 +19,8 @@ dim connected
 dim hr_data(2)
 
 # Boundary conditions for heart beat counter (Limit voltage)
-const def_lim	= 2		#V
-const vdd 		= 3.3	#V
+const def_lim	= 2000	#mV
+const vdd 		= 3300	#mV
 
 # Timer durations
 const timer_0	= 1000	#ms
@@ -52,7 +52,7 @@ event system_boot(major, minor, patch, build, bootloader, hw)
 	connected = 0
 	
 	# Variable initializer
-	def_n = 0
+	defo = 0
 	def_previous = 0
 	hr_counter = 0
 	
@@ -108,11 +108,12 @@ event hardware_soft_timer(handle)
 		hr_counter = 0	# Counter reset
 		
 		# HR data Storage
-		hr_data(0:1)=0	# flags. zero means heart rate is sent as 8-bit value and no extra info is sent
-		hr_data(1:2)=hrvalue	# BPM value
+		hr_data(0:1) = 0	# flags. zero means heart rate is sent as 8-bit value and no extra info is sent
+		hr_data(1:1) = hrvalue	# BPM value
 		
 		#$ff: To all connected devices; xgatt_hr: characteristic handle;
         call gatt_server_send_characteristic_notification($ff, xgatt_hr, 2, hr_data(0:2))(sent)
+		
 		if sent = 0 then
 			#LED TX on
 			call hardware_write_gpio(led_port_TX,led_mask_TX,led_mask_TX)
@@ -126,25 +127,29 @@ event hardware_soft_timer(handle)
 	# The fast 50 ms timer: evaluates the ADC Strain Gage input and count nº HeartBeats	
     if handle = 1 then
 		# System request ADC (12-bit) read operation
-		call hardware_read_adc(7) (result,input,adcvalue)
-
+		call hardware_read_adc(4) (result,input,adcvalue)
 		if result = 0 then #Result=0 successful
             # convert raw ADC reading to deformation (adc value range is 0..4095 -> hrvalue range is 40..220)
 			# ADC * (V_ref / ADC_max) * V_coeff + offset
-            def_n = adcvalue * (vdd / 4096)						
+			# div=(10*vdd)/4096 -> IMP: vdd/4096=0.8 -> 0 -> The code aproximates to 0 consequently the data read is 0
+			# 	Important to make de multiplication before dividing
+			defo = (adcvalue*vdd)/4096
+			#call endpoint_send(0,2,defo)
         else #error
             # if ADC read is unsuccessful, response value is 0
-            def_n = 0
+            defo = 0
         end if
 
 		# Heart Rate counter
-		if def_n > def_lim & def_previous < def_lim then
-			# Evaluates heart peaks
-			hr_counter = hr_counter + 1
+		if defo > def_lim then
+			if def_previous < def_lim then
+				# Evaluates heart peaks
+				hr_counter = hr_counter + 1
+			end if
 		end if
 		
 		# Store actual deformation to previous
-		def_previous = def_n			
+		def_previous = defo			
     end if
 end
 
