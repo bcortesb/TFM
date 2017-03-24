@@ -9,7 +9,7 @@ dim input
 dim adcvalue
 dim hrvalue
 dim sent
-dim def
+dim def_n
 dim def_previous
 dim hr_counter
 dim connected
