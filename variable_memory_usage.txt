@@ -1,4 +1,4 @@
-42
+38
 0:0	ENDPOINT_FLAG_ACTIVE
 0:0	ENDPOINT_FLAG_BGAPI
 0:0	ENDPOINT_FLAG_CLOSING
@@ -177,21 +177,21 @@
 24:4	def_previous
 28:4	hr_counter
 32:4	connected
-36:4	div
-40:2	hr_data
-42:0	def_lim
-42:0	vdd
-42:0	timer_0
-42:0	timer_1
-42:0	led_port_Bluetooth
-42:0	led_mask_Bluetooth
-42:0	led_pin_nbr_Bluetooth
-42:0	led_port_TX
-42:0	led_mask_TX
-42:0	led_pin_nbr_TX
-42:0	led_port_Disc
-42:0	led_mask_Disc
-42:0	led_pin_nbr_Disc
-42:0	reset_button_port
-42:0	reset_button_mask
-42:0	reset_button_pin_nbr
+36:0	zeros
+36:2	hr_data
+38:0	def_lim
+38:0	vdd
+38:0	timer_0
+38:0	timer_1
+38:0	led_port_Bluetooth
+38:0	led_mask_Bluetooth
+38:0	led_pin_nbr_Bluetooth
+38:0	led_port_TX
+38:0	led_mask_TX
+38:0	led_pin_nbr_TX
+38:0	led_port_Disc
+38:0	led_mask_Disc
+38:0	led_pin_nbr_Disc
+38:0	reset_button_port
+38:0	reset_button_mask
+38:0	reset_button_pin_nbr

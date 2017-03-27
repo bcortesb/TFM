@@ -14,16 +14,18 @@ dim def_previous
 dim hr_counter
 dim connected
 
+const zeros = 10
+
 # Max (buffer size): 256 bytes
 # Heart Rate variable (1st byte: Flag; 2nd byte: HB (uint8))
 dim hr_data(2)
 
 # Boundary conditions for heart beat counter (Limit voltage)
-const def_lim	= 2000	#mV
+const def_lim	= 15000	#mV * 10
 const vdd 		= 3300	#mV
 
 # Timer durations
-const timer_0	= 1000	#ms
+const timer_0	= 10000	#ms
 const timer_1	= 50	#ms
 
 # LED pins:
@@ -48,10 +50,8 @@ const reset_button_pin_nbr	= 6
 
 # Boot event listener - Generated when the module is started
 event system_boot(major, minor, patch, build, bootloader, hw)
-	
-	connected = 0
-	
 	# Variable initializer
+	connected = 0
 	defo = 0
 	def_previous = 0
 	hr_counter = 0
@@ -87,11 +87,10 @@ event system_initialized(addr)
     call le_gap_set_mode(2,2)
 	
     # set timer, time interval between events is 1s [Send HeartRate Data]
-    call hardware_set_soft_timer(timer_0,0,0)	# interval = 1 s, handle = 0, timer is repeating
+    call hardware_set_soft_timer(timer_0,0,0)	# interval = timer_0 s, handle = 0, timer is repeating
 
     # start another timer, this fast timer is used to monitor & process HeartBeats.
-    call hardware_set_soft_timer(timer_1,1,0)    # interval = 50 ms, handle = 1, timer is repeating
-	# 2 ms -> 500Hz -> Frequency for ECG read
+    call hardware_set_soft_timer(timer_1,1,0)    # interval = timer_1 ms, handle = 1, timer is repeating
 
     # set connectable and discoverable mode
     call le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable)
@@ -103,8 +102,7 @@ event hardware_soft_timer(handle)
 	# The 1s timer: extrapolate 1 min Heart Rate and send LE message
 	if handle = 0 then
 		# Heart Rate extrapolation
-		hrvalue = hr_counter * 60 / (timer_0 / 1000)
-		
+		hrvalue = (hr_counter * 6) / (timer_0 / 1000)
 		hr_counter = 0	# Counter reset
 		
 		# HR data Storage
@@ -120,11 +118,10 @@ event hardware_soft_timer(handle)
 		else
 			#LED TX off
 			call hardware_write_gpio(led_port_TX,led_mask_TX,$0000)
-		end if
-			
+		end if	
     end if
 	
-	# The fast 50 ms timer: evaluates the ADC Strain Gage input and count nº HeartBeats	
+	# The fast timer_1 ms timer: evaluates the ADC Strain Gage input and count nº HeartBeats	
     if handle = 1 then
 		# System request ADC (12-bit) read operation
 		call hardware_read_adc(4) (result,input,adcvalue)
@@ -132,22 +129,17 @@ event hardware_soft_timer(handle)
             # convert raw ADC reading to deformation (adc value range is 0..4095 -> hrvalue range is 40..220)
 			# ADC * (V_ref / ADC_max) * V_coeff + offset
 			# div=(10*vdd)/4096 -> IMP: vdd/4096=0.8 -> 0 -> The code aproximates to 0 consequently the data read is 0
-			# 	Important to make de multiplication before dividing
-			defo = (adcvalue*vdd)/4096
-			#call endpoint_send(0,2,defo)
+			defo = (adcvalue*vdd*zeros)/4096
         else #error
             # if ADC read is unsuccessful, response value is 0
             defo = 0
         end if
 
 		# Heart Rate counter
-		if defo > def_lim then
-			if def_previous < def_lim then
+		if defo > def_lim & def_previous < def_lim then
 				# Evaluates heart peaks
 				hr_counter = hr_counter + 1
-			end if
 		end if
-		
 		# Store actual deformation to previous
 		def_previous = defo			
     end if
